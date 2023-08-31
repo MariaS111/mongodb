@@ -4,6 +4,7 @@
 # users_collection = db['users']
 # books_collection = db['books']
 # shelves_collection = db['shelves']
+from context_manager import MongoDBConnection
 
 
 def register(collection, shelves, name, password):
@@ -17,14 +18,16 @@ def register(collection, shelves, name, password):
         create_shelf(shelves, number_of_users)
         return collection.find_one({'name': name})
     else:
-        return 'This name is already taken or password is less than 8 characters'
+        return False
 
 
 def create_shelf(collection, pk):
+    print('enter')
     collection.insert_one({
         "_id": pk,
         "shelf": "Your book shelf"
     })
+    print('enter')
 
 
 def login(collection, name, password):
@@ -32,7 +35,10 @@ def login(collection, name, password):
         'name': name,
         'password': password
     })
-    return user
+    if user:
+        return user
+    else:
+        return False
 
 
 def logout():
@@ -64,13 +70,13 @@ def add_to_shelf(collection, book_collection, shelf_pk, book_pk):
     collection.update_one(
         {"_id": shelf_pk},
         {"$push": {"books": book}})
-    add_status_to_book(collection, book_pk, shelf_pk)
+    add_status_to_book(collection, shelf_pk, book_pk)
 
 
-def add_status_to_book(collection, book_pk, shelf_pk):
+def add_status_to_book(collection, shelf_pk, book_pk):
     collection.update_one(
-        {"_id": shelf_pk},
-        {"$set": {str(book_pk): "unread"}})
+        {"_id": shelf_pk, "books._id": book_pk},
+        {"$set": {"books.$.status": "unread"}})
 
 
 def show_unread_books_from_shelf(collection):
@@ -79,3 +85,5 @@ def show_unread_books_from_shelf(collection):
 
 def show_read_books_from_shelf(collection):
     collection.find_many({"status": "read"})
+
+
