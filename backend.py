@@ -73,6 +73,11 @@ def add_to_shelf(collection, book_collection, shelf_pk, book_pk):
     add_status_to_book(collection, shelf_pk, book_pk)
 
 
+def get_shelf(collection, shelf_pk):
+    responce = collection.find_one({'_id': shelf_pk})
+    return responce
+
+
 def add_status_to_book(collection, shelf_pk, book_pk):
     collection.update_one(
         {"_id": shelf_pk, "books._id": book_pk},
@@ -80,10 +85,10 @@ def add_status_to_book(collection, shelf_pk, book_pk):
 
 
 def show_unread_books_from_shelf(collection):
-    collection.find_many({"status": "unread"})
+    collection.find_many({"books.$.status": "unread"})
 
 
 def show_read_books_from_shelf(collection):
-    collection.find_many({"status": "read"})
+    collection.find_many({"books.$.status": "read"})
 
 

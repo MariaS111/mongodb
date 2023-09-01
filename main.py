@@ -3,7 +3,7 @@ from PyQt5 import uic
 import backend
 from context_manager import MongoDBConnection
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QGridLayout, QCheckBox
 
 
 class WelcomeWindow(QMainWindow):
@@ -15,10 +15,12 @@ class WelcomeWindow(QMainWindow):
 
 class LoginWindow(QMainWindow):
 
-    def __init__(self, users):
+    def __init__(self, users, shelves):
         super(LoginWindow, self).__init__()
+        self.shelf_window = None
         uic.loadUi("LoginWindow.ui", self)
         self.users = users
+        self.shelves = shelves
         self.signInButton.clicked.connect(self.login)
 
     def login(self):
@@ -27,11 +29,53 @@ class LoginWindow(QMainWindow):
         if username and password:
             response = backend.login(self.users, username, password)
             if response:
-                self.message.setText(response['name'])
+                print(response)
+                # self.message.setText(response['_id'])
+                self.shelf_window = ShelfWindow(self.shelves, response['_id'])
+                self.shelf_window.show()
+                self.shelf_window.show_books_from_shelf()
+                self.close()
             else:
                 self.message.setText('User doesn\'t exists')
         else:
             self.message.setText('No credential provided')
+
+
+class ShelfWindow(QMainWindow):
+
+    def __init__(self, shelves, user):
+        super(ShelfWindow, self).__init__()
+        uic.loadUi("ShelfWindow.ui", self)
+        self.shelves = shelves
+        self.user = user
+
+    def show_books_from_shelf(self):
+        response = backend.get_shelf(self.shelves, self.user)
+        # self.vertical_layout = QVBoxLayout()
+        self.grid_layout = QGridLayout()
+        print(response)
+        row, column = 0, 0
+
+        for key, value in response.items():
+            if key == 'books':
+                for i in range(len(response['books'])):
+                    vertical_layout = QVBoxLayout()
+                    for k, v in response['books'][i].items():
+                        label = QLabel(f"{k}: {v}")
+                        vertical_layout.addWidget(label)
+                    radio_button = QCheckBox()
+                    radio_button.setText('Mark as read')
+                    vertical_layout.addWidget(radio_button)
+                    self.grid_layout.addLayout(vertical_layout, row, column)
+                    column += 1
+                    if column == 5:
+                        column = 0
+                        row += 1
+        self.scrollArea.setLayout(self.grid_layout)
+
+        # self.widget = QWidget()
+        # self.widget.setLayout(self.vertical_layout)
+        # self.setCentralWidget(self.widget)
 
 
 class RegisterWindow(QMainWindow):
@@ -73,13 +117,12 @@ class MainWindow:
         self.welcome_window.show()
 
     def show_login_window(self):
-        self.login_window = LoginWindow(self.users_collection)
+        self.login_window = LoginWindow(self.users_collection, self.shelves_collection)
         self.login_window.show()
 
     def show_register_window(self):
         self.register_window = RegisterWindow(self.users_collection, self.shelves_collection)
         self.register_window.show()
-        # self.register_window.signUpButton.clicked.connect(self.register_window.close)
 
 
 if __name__ == '__main__':
