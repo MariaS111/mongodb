@@ -7,7 +7,7 @@ from auth.auth_bearer import JWTBearer
 
 async def get_books() -> list:
     res = []
-    cursor = database.get_books_from_db()
+    cursor = await database.get_books_from_db()
     for document in await cursor.to_list(length=100):
         document["_id"] = str(document["_id"])
         res.append(document)
