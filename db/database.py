@@ -28,6 +28,11 @@ async def create_shelf(shelf_json):
     return result
 
 
+async def get_shelf(id):
+    result = await DB['shelves'].find_one({'_id': id})
+    return result
+
+
 async def register(user_data):
     existing_user = await DB['users'].find_one({'email': user_data['email']})
     if existing_user:

@@ -30,6 +30,11 @@ class UserLogin(BaseModel):
     password: str = Field(...)
 
 
+class UserProfile(BaseModel):
+    name: str
+    email: EmailStr
+
+
 class StatusEnum(str, Enum):
     unread = 'unread'
     read = 'read'

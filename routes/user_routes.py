@@ -1,8 +1,8 @@
 from fastapi.routing import APIRoute
-from fastapi import Body, Depends
+from fastapi import Body, Depends, Request
 from auth.auth_bearer import JWTBearer
 from auth.auth_handler import signJWT, decodeJWT
-from models.models import User, UserLogin
+from models.models import User, UserLogin, UserProfile
 from db import database
 
 
@@ -15,7 +15,8 @@ async def login_user(user: UserLogin = Body(...)):
         return check_user
 
 
-async def get_profile(current_user: User = Depends(decodeJWT)):
+async def get_profile(request: Request):
+    current_user = decodeJWT(request.headers['authorization'].split()[1])
     curr_user = await database.get_profile(current_user['user_id'])
     return {'name': curr_user['name'], 'email': curr_user['email']}
 
@@ -32,5 +33,5 @@ async def sign_up_user(user: User = Body(...)):
 routes = [
     APIRoute(path='/login_user/', endpoint=login_user, methods=["POST"]),
     APIRoute(path='/sign_up/', endpoint=sign_up_user, methods=["POST"]),
-    APIRoute(path='/profile/', endpoint=get_profile, methods=["GET"], dependencies=[Depends(JWTBearer())]),
+    APIRoute(path='/profile/', endpoint=get_profile, methods=["GET"], response_model=UserProfile, dependencies=[Depends(JWTBearer())]),
 ]
