@@ -59,3 +59,13 @@ async def get_profile(email):
         return user
     else:
         return {'detail': 'User with this credentials doesn\'t exist'}
+
+
+async def add_book_to_shelf(shelf_id, book):
+    res = await DB['shelves'].update_one(
+        {'_id': shelf_id},
+        {'$push': {'books': book}}
+    )
+    if res:
+        return {'message': "Success"}
+

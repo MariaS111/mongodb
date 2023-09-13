@@ -42,6 +42,9 @@ class StatusEnum(str, Enum):
 
 class BookEntry(BaseModel):
     _id: ObjectId
+    title: str
+    author: str
+    description: str
     status: StatusEnum
     mark: Optional[conint(ge=0, le=10)]
     timestamp: datetime
@@ -49,11 +52,6 @@ class BookEntry(BaseModel):
 
 class Shelf(BaseModel):
     _id: ObjectId
-    books: List[BookEntry] = []
-
-    def add_book(self, book_id: ObjectId, mark: Optional[int] = None):
-        current_time = datetime.now()
-        book_entry = BookEntry(book_id=book_id, status=StatusEnum.unread, mark=mark, timestamp=current_time)
-        self.books.append(book_entry)
+    books: List[BookEntry]
 
 
