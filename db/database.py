@@ -45,6 +45,10 @@ async def register(user_data):
         return user_new
 
 
+async def mark_as_read(shelf_id, updated_shelf):
+    await DB['shelves'].update_one({"_id": shelf_id}, {"$set": updated_shelf})
+
+
 async def login(user_data):
     user = await DB['users'].find_one(user_data)
     if user:

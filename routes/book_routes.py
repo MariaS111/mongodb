@@ -35,6 +35,7 @@ async def get_user_id(request: Request) -> dict:
 async def get_shelf(request: Request) -> dict:
     id = await get_user_id(request)
     shelf = await database.get_shelf(id)
+
     for book_entry in shelf.get('books', []):
         book_id = book_entry.get('_id')
         if book_id:
@@ -59,6 +60,34 @@ async def add_book_to_shelf(id: str, request: Request) -> dict:
     return response
 
 
+async def get_book_from_shelf(request: Request, book_id: str) -> dict:
+    id = await get_user_id(request)
+    shelf = await database.get_shelf(id)
+
+    for book_entry in shelf.get('books', []):
+        if str(book_entry.get('_id')) == book_id:
+            book_info = await database.get_book_from_db(book_id)
+            if book_info:
+                book_entry['title'] = book_info['title']
+                book_entry['author'] = book_info['author']
+                book_entry['description'] = book_info['description']
+            return book_entry
+    return {"message": "Book not found"}
+
+
+async def mark_book_as_read(request: Request, id: str, mark: int) -> dict:
+    shelf_id = await get_user_id(request)
+    shelf = await database.get_shelf(shelf_id)
+
+    for book_entry in shelf.get('books', []):
+        if str(book_entry.get('_id')) == id:
+            book_entry['status'] = StatusEnum.read
+            book_entry['mark'] = mark
+            await database.mark_as_read(shelf_id, shelf)
+            return {"message": "Book marked as read with mark {}".format(mark)}
+    return {"message": "Book not found"}
+
+
 async def post_book(book: Book) -> dict:
     try:
         book = book.model_dump()
@@ -74,4 +103,6 @@ routes = [
     APIRoute(path='/add_book/', endpoint=post_book, methods=["POST"], response_model=Book, dependencies=[Depends(JWTBearer())]),
     APIRoute(path='/get_shelf/', endpoint=get_shelf, methods=["GET"], response_model=Shelf, dependencies=[Depends(JWTBearer())]),
     APIRoute(path="/book/{id}/add_to_shelf/", endpoint=add_book_to_shelf, methods=["PUT", "PATCH"], dependencies=[Depends(JWTBearer())]),
+    APIRoute(path="/get_shelf/{id}/", endpoint=get_book_from_shelf, response_model=BookEntry, methods=["GET"], dependencies=[Depends(JWTBearer())]),
+    APIRoute(path="/get_shelf/{id}/mark_as_read/", endpoint=mark_book_as_read, methods=["PUT", "PATCH"], dependencies=[Depends(JWTBearer())]),
 ]
