@@ -4,8 +4,15 @@ from fastapi.routing import APIRoute
 from auth.auth_handler import decodeJWT
 from models.models import Book, User, Shelf, BookEntry, StatusEnum
 from db import database
-from fastapi import Depends, Request, Query
+from fastapi import Depends, Request, Query, HTTPException
 from auth.auth_bearer import JWTBearer
+
+
+def check_user_role(jwt: str = Depends(JWTBearer())):
+    payload = decodeJWT(jwt)
+    if payload.get("role") != "user":
+        raise HTTPException(status_code=403, detail="User access only")
+    return jwt
 
 
 async def get_books() -> list:
@@ -116,12 +123,12 @@ async def post_book(book: Book) -> dict:
 
 
 routes = [
-    APIRoute(path="/book/", endpoint=get_books, methods=["GET"], response_model=list[Book], dependencies=[Depends(JWTBearer())]),
-    APIRoute(path="/book/{id}/", endpoint=get_book, methods=["GET"], response_model=Book, dependencies=[Depends(JWTBearer())]),
-    APIRoute(path='/add_book/', endpoint=post_book, methods=["POST"], response_model=Book, dependencies=[Depends(JWTBearer())]),
-    APIRoute(path='/get_shelf/', endpoint=get_shelf, methods=["GET"], response_model=Shelf, dependencies=[Depends(JWTBearer())]),
-    APIRoute(path='/get_shelf/{status}/', endpoint=get_books_by_status, methods=["GET"], response_model=Shelf, dependencies=[Depends(JWTBearer())]),
-    APIRoute(path="/book/{id}/add_to_shelf/", endpoint=add_book_to_shelf, methods=["PUT", "PATCH"], dependencies=[Depends(JWTBearer())]),
-    APIRoute(path="/get_shelf/{id}/", endpoint=get_book_from_shelf, response_model=BookEntry, methods=["GET"], dependencies=[Depends(JWTBearer())]),
-    APIRoute(path="/get_shelf/{id}/mark_as_read/", endpoint=mark_book_as_read, methods=["PUT", "PATCH"], dependencies=[Depends(JWTBearer())]),
+    APIRoute(path="/book/", endpoint=get_books, methods=["GET"], response_model=list[Book], dependencies=[Depends(check_user_role)]),
+    APIRoute(path="/book/{id}/", endpoint=get_book, methods=["GET"], response_model=Book, dependencies=[Depends(check_user_role)]),
+    APIRoute(path='/add_book/', endpoint=post_book, methods=["POST"], response_model=Book, dependencies=[Depends(check_user_role)]),
+    APIRoute(path='/get_shelf/', endpoint=get_shelf, methods=["GET"], response_model=Shelf, dependencies=[Depends(check_user_role)]),
+    APIRoute(path='/get_shelf/{status}/', endpoint=get_books_by_status, methods=["GET"], response_model=Shelf, dependencies=[Depends(check_user_role)]),
+    APIRoute(path="/book/{id}/add_to_shelf/", endpoint=add_book_to_shelf, methods=["PUT", "PATCH"], dependencies=[Depends(check_user_role)]),
+    APIRoute(path="/get_shelf/{id}/", endpoint=get_book_from_shelf, response_model=BookEntry, methods=["GET"], dependencies=[Depends(check_user_role)]),
+    APIRoute(path="/get_shelf/{id}/mark_as_read/", endpoint=mark_book_as_read, methods=["PUT", "PATCH"], dependencies=[Depends(check_user_role)]),
 ]

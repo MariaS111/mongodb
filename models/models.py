@@ -12,6 +12,17 @@ class Book(BaseModel):
     description: str
 
 
+class Admin(BaseModel):
+    login: str = Field(..., min_length=6, max_length=32)
+    password: str = Field(..., min_length=8, max_length=32)
+    email: EmailStr
+
+
+class AdminLogin(BaseModel):
+    login: str = Field(..., min_length=6, max_length=32)
+    password: str = Field(..., min_length=8, max_length=32)
+
+
 class User(BaseModel):
     _id: ObjectId
     name: str = Field(..., min_length=6, max_length=32)

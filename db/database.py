@@ -57,6 +57,14 @@ async def login(user_data):
         return {'detail': 'User with this credentials doesn\'t exist'}
 
 
+async def login_admin(user_data):
+    user = await DB['admins'].find_one(user_data)
+    if user:
+        return user
+    else:
+        return {'detail': 'Admin with this credentials doesn\'t exist'}
+
+
 async def get_profile(email):
     user = await DB['users'].find_one({'email': email})
     if user:
