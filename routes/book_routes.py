@@ -4,7 +4,7 @@ from fastapi.routing import APIRoute
 from auth.auth_handler import decodeJWT
 from models.models import Book, User, Shelf, BookEntry, StatusEnum
 from db import database
-from fastapi import Depends, Request
+from fastapi import Depends, Request, Query
 from auth.auth_bearer import JWTBearer
 
 
@@ -45,6 +45,24 @@ async def get_shelf(request: Request) -> dict:
                 book_entry['author'] = book_info['author']
                 book_entry['description'] = book_info['description']
     return shelf
+
+
+async def get_books_by_status(request: Request, status: str = None) -> dict:
+    id = await get_user_id(request)
+    shelf = await database.get_shelf(id)
+
+    books_on_shelf = [book_entry for book_entry in shelf.get('books', []) if book_entry.get('status') == status]
+
+    for book_entry in books_on_shelf:
+        book_id = book_entry.get('_id')
+        if book_id:
+            book_info = await database.get_book_from_db(book_id)
+            if book_info:
+                book_entry['title'] = book_info['title']
+                book_entry['author'] = book_info['author']
+                book_entry['description'] = book_info['description']
+
+    return {'books': books_on_shelf}
 
 
 async def add_book_to_shelf(id: str, request: Request) -> dict:
@@ -102,6 +120,7 @@ routes = [
     APIRoute(path="/book/{id}/", endpoint=get_book, methods=["GET"], response_model=Book, dependencies=[Depends(JWTBearer())]),
     APIRoute(path='/add_book/', endpoint=post_book, methods=["POST"], response_model=Book, dependencies=[Depends(JWTBearer())]),
     APIRoute(path='/get_shelf/', endpoint=get_shelf, methods=["GET"], response_model=Shelf, dependencies=[Depends(JWTBearer())]),
+    APIRoute(path='/get_shelf/{status}/', endpoint=get_books_by_status, methods=["GET"], response_model=Shelf, dependencies=[Depends(JWTBearer())]),
     APIRoute(path="/book/{id}/add_to_shelf/", endpoint=add_book_to_shelf, methods=["PUT", "PATCH"], dependencies=[Depends(JWTBearer())]),
     APIRoute(path="/get_shelf/{id}/", endpoint=get_book_from_shelf, response_model=BookEntry, methods=["GET"], dependencies=[Depends(JWTBearer())]),
     APIRoute(path="/get_shelf/{id}/mark_as_read/", endpoint=mark_book_as_read, methods=["PUT", "PATCH"], dependencies=[Depends(JWTBearer())]),
