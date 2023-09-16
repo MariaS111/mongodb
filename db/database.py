@@ -18,6 +18,17 @@ async def get_book_from_db(id):
     return cursor
 
 
+async def update_book_from_db(id, update_dict):
+    await DB['books'].update_one({"_id": ObjectId(id)}, {'$set': update_dict})
+    cursor = await DB['books'].find_one({"_id": ObjectId(id)})
+    return cursor
+
+
+async def delete_book_from_db(id):
+    result = await DB['books'].delete_one({"_id": ObjectId(id)})
+    return result
+
+
 async def create_book(book):
     book = await DB['books'].insert_one(book)
     return book
