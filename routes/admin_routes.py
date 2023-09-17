@@ -1,6 +1,5 @@
 from fastapi import Body, Depends, HTTPException
 from fastapi.routing import APIRoute
-
 from auth.auth_bearer import JWTBearer
 from auth.auth_handler import signJWT, decodeJWT
 from db import database

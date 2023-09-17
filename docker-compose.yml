@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  main_app:
+    build:
+      context: .
+    command: uvicorn main:app --host 0.0.0.0 --reload
+    ports:
+      - "8000:8000"
+    depends_on:
+      - rabbitmq
+      - mongodb
+
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - 15673:15672
+
+  celery_worker:
+    build:
+      context: .
+    command: celery -A tasks.tasks:celery worker --loglevel=info
+    depends_on:
+      - rabbitmq
+      - main_app
+
+  mongodb:
+    image: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      - "MONGO_INITDB_DATABASE=MongoTest"
+#    volumes:
+#      - .:/code
+#    entrypoint: [ "/code/mongo_entry.sh" ]
+
+    stdin_open: true

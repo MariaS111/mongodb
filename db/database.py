@@ -3,7 +3,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from decouple import config
 
 
-URI = config("MONGODB_URL", default="mongodb://localhost:27017/")
+URI = config("MONGODB_DOCKER_URL", default="mongodb://localhost:27017/")
 CLIENT = AsyncIOMotorClient(URI)
 DB = CLIENT['MongoTest']
 

@@ -5,6 +5,7 @@ from auth.auth_handler import signJWT, decodeJWT
 from models.models import User, UserLogin, UserProfile
 from db import database
 from routes.book_routes import check_user_role
+from tasks.tasks import email_after_registration
 
 
 async def login_user(user: UserLogin = Body(...)):
@@ -26,6 +27,7 @@ async def sign_up_user(user: User = Body(...)):
     user = user.model_dump()
     user_new = await database.register(user)
     if user_new.get('email', False):
+        email_after_registration.delay(user_new.get('name', False), user_new.get('email', False))
         return signJWT(user_new['email'], role='user')
     else:
         return user_new

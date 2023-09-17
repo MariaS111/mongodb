@@ -11,6 +11,8 @@ static
 # Backup files #
 *.bak
 
+mongodb.log
+
 # If you are using PyCharm #
 .idea
 .idea/**/workspace.xml
